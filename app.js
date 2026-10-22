@@ -46,15 +46,55 @@ app.post('/register', async(req, res) => {
     //generate a token for the user and send it as a cookie
     const token = jwt.sign(
       { userId: user._id },
-      'ssh' ///process.env.JWT_SECRET,
+      'ssh', ///process.env.JWT_SECRET,
       { expiresIn: '1h' }
     );
     res.cookie('token', token, { httpOnly: true });
 
+    user.token = token;
+    user.password = undefined;
+
+
+
     // Add user creation logic here
-    res.status(201).send('User registered successfully');
+    res.status(201).json(user);
   } catch (error) {
     res.status(500).send('Error registering user');
+  }
+});
+
+
+app.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).send('Email and password are required');
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).send('Invalid email or password');
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(400).send('Invalid email or password');
+    }
+
+    const token = jwt.sign(
+      { userId: user._id },
+      'ssh', ///process.env.JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+    res.cookie('token', token, { httpOnly: true });
+
+    user.token = token;
+    user.password = undefined;
+
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(500).send('Error logging in');
   }
 });
 
