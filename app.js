@@ -5,6 +5,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const User = require('./model/user');
 const jwt = require('jsonwebtoken');
+const auth = require('./middleware/auth');
 
 const app = express();
 app.use(express.json());
@@ -99,20 +100,8 @@ app.post('/login', async (req, res) => {
 });
 
 
-app.get("/dashboard", (req, res) => {
-  const token = req.cookies.token;
-  if (!token) {
-    return res.status(401).send('Access denied');
-  }
-
-  try {
-    const decoded = jwt.verify(token, 'ssh'); ///process.env.JWT_SECRET);
-    res.status(200).send(`Welcome to the dashboard, user ${decoded.userId}`);
-  } catch (error) {
-    res.status(400).send('Invalid token');
-  }
-
-  
+app.get("/dashboard",auth, (req, res) => {
+    res.status(200).send(`Welcome to the dashboard, user`);
 });
 
 
